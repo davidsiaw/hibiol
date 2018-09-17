@@ -23,8 +23,9 @@ https://localhost:4567
 
 ## How to deploy
 
-`docker run -v `pwd`/build:/app/release -v `pwd`/data:/app/data -ti davidsiaw/hibiol build`
-
+```
+docker run -v `pwd`/build:/app/release -v `pwd`/data:/app/data -ti davidsiaw/hibiol build
+```
 
 ---
 
