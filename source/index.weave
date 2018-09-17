@@ -1,0 +1,8 @@
+include "main.rb"
+
+make_page("", "#{prefix}/home.md")
+
+Dir["#{prefix}/*.md"].each do |filename|
+  name = filename.sub(/\.md$/, "").sub(/^#{prefix}\//, "")
+  make_page(name, filename)
+end

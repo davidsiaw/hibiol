@@ -1,0 +1,6 @@
+.test.js
+.DS_Store
+Thumbs.db
+.tmp_preview.md
+.test_modules/
+cache/

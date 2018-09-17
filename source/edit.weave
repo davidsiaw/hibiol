@@ -1,0 +1,136 @@
+if ENV["PREVIEW"] == "true"
+
+include "main.rb"
+
+empty_page "page", "Hibiol Wiki" do
+  header do
+    col 12 do
+      h1 "Hibiol Wiki Editor"
+
+    end
+  end
+
+  row do
+    col 12 do
+
+      script <<-SCRIPT
+
+        function getUrlVars()
+        {
+            var vars = [], hash;
+            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for(var i = 0; i < hashes.length; i++)
+            {
+                hash = hashes[i].split('=');
+                vars.push(hash[0]);
+                vars[hash[0]] = hash[1];
+            }
+            return vars;
+        }
+      SCRIPT
+
+
+      div id: "tabs", style: "display: none;" do
+        tabs do
+          tab "Edit" do
+                
+            wform do
+
+              h2 { text "Editing: "; span "", id: "titletext" }
+
+              textarea id: "txtcontent", name: "content", :"data-provide" => "markdown", rows: 40, :"data-hidden-buttons" => "cmdPreview", :"data-resize" => :vertical do
+
+              end
+
+              br
+
+              submit "Save" do
+                script <<-SCRIPT
+                  data["content"] = $("#txtcontent").val();
+
+                  var query = getUrlVars();
+
+                  $.post( "http://#{api_host}/write", 
+                    {
+                      name: query["name"],
+                      slug: query["slug"],
+                      content: encodeURIComponent(data["content"])
+                    },
+                    function( d )
+                    {
+                      console.log("ok", d)
+                    }
+                  );
+
+                SCRIPT
+              end
+
+              text " "
+              normal_button "Done" do
+                script <<-SCRIPT
+                  var query = getUrlVars();
+                  location.href = "/" + query["slug"]
+                SCRIPT
+              end
+            end
+
+          end
+
+          tab "Preview" do
+            iframe id: "preview_frame", src: "/edit/preview", style: "width: 100%; resize: vertical; height: 900px" do
+            end
+          end
+
+        end
+      end
+
+      on_page_load <<-SCRIPT
+
+        console.log("Hello")
+        var query = getUrlVars();
+
+        if (query["slug"])
+        {
+          $("#titletext").text(query["name"]);
+          $.get( "http://#{api_host}/read?slug="+query["slug"],
+            function( d )
+            {
+              $("#txtcontent").val(d.content);
+              $("#tabs").show();
+            }
+          );
+          
+        }
+
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+          //var target = $(e.target).attr("href") // activated tab
+          if (e.target.innerHTML == "Preview")
+          {
+            $.post( "http://#{api_host}/write_preview", 
+              {
+                content: encodeURIComponent($("#txtcontent").val())
+              },
+              function( d )
+              {
+                $( '#preview_frame' ).attr( 'src', function ( i, val ) { return val; });
+              }
+            );
+
+          }
+          
+        });
+      SCRIPT
+
+      request_js "js/plugins/bootstrap-markdown/bootstrap-markdown.js"
+      request_js "js/plugins/bootstrap-markdown/markdown.js"
+      request_css "css/plugins/bootstrap-markdown/bootstrap-markdown.min.css"
+    end
+  end
+end
+
+if File.exist?(".tmp_preview.md")
+  make_page("preview", ".tmp_preview.md")
+end
+
+
+end

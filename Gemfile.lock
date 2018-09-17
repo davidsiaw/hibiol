@@ -1,0 +1,80 @@
+PATH
+  remote: /home/david/programs/weaver
+  specs:
+    weaver (0.6.7)
+      activesupport
+      optimist
+      sinatra (~> 2.0.3)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    activesupport (5.2.1)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      i18n (>= 0.7, < 2)
+      minitest (~> 5.1)
+      tzinfo (~> 1.1)
+    aws-sdk (2.11.130)
+      aws-sdk-resources (= 2.11.130)
+    aws-sdk-core (2.11.130)
+      aws-sigv4 (~> 1.0)
+      jmespath (~> 1.0)
+    aws-sdk-resources (2.11.130)
+      aws-sdk-core (= 2.11.130)
+    aws-sigv4 (1.0.3)
+    concurrent-ruby (1.0.5)
+    foreman (0.85.0)
+      thor (~> 0.19.1)
+    hashie (3.6.0)
+    i18n (1.1.0)
+      concurrent-ruby (~> 1.0)
+    jmespath (1.4.0)
+    json (2.1.0)
+    minitest (5.11.3)
+    momo (0.4.1)
+      activesupport
+      aws-sdk-core
+      json
+      trollop
+    mustermann (1.0.3)
+    optimist (3.0.0)
+    rack (2.0.5)
+    rack-protection (2.0.4)
+      rack
+    redcarpet (3.4.0)
+    rubyzip (1.2.2)
+    s3cabinet (0.1.0)
+      aws-sdk-core
+      json
+    sinatra (2.0.4)
+      mustermann (~> 1.0)
+      rack (~> 2.0)
+      rack-protection (= 2.0.4)
+      tilt (~> 2.0)
+    sumomo (0.8.3)
+      activesupport
+      aws-sdk (~> 2)
+      hashie
+      momo (= 0.4.1)
+      rubyzip
+      s3cabinet
+      trollop
+    thor (0.19.4)
+    thread_safe (0.3.6)
+    tilt (2.0.8)
+    trollop (2.9.9)
+    tzinfo (1.2.5)
+      thread_safe (~> 0.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  activesupport
+  foreman
+  redcarpet
+  sumomo (= 0.8.3)
+  weaver!
+
+BUNDLED WITH
+   1.14.6
