@@ -2,6 +2,34 @@
 
 Hibiol is a static wiki generator made with Weaver and Sumomo's API feature.
 
+# Getting started using docker
+
+This is a lot cleaner because all you have is a current directory with your pages.
+
+## Requires
+
+- docker
+
+## How to run
+
+```
+mkdir -p data/pages
+docker run -v `pwd`/data:/app/data -p 4567:4567 -p 5000:5000 -ti davidsiaw/hibiol
+```
+
+## Where to use
+
+https://localhost:4567
+
+## How to deploy
+
+`docker run -v `pwd`/build:/app/release -v `pwd`/data:/app/data -ti davidsiaw/hibiol build`
+
+
+---
+
+# Getting started normally
+
 ## Requires
 
 - node js

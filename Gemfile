@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'weaver', path: "/home/david/programs/weaver"
+gem 'weaver'
 gem 'redcarpet'
 gem 'activesupport'
 gem 'foreman'
