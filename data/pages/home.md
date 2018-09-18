@@ -1,4 +1,4 @@
-mainpage.md
+Welcome to Hibiol Wiki
 
 This is a link to [[Another]] page
 
