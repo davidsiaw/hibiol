@@ -150,46 +150,7 @@ digraph finite_state_machine {
   #{conns.join("\n  ")}
 }
     DOT
-
-
-  # A [group=g1]
-  # {rank = same; B[group=g2]; C[group=g3]}
-  # D [group=g1]
-  # {rank = same; E[group=g2]; F[group=g3]}
-
-  # A -> B [label="2", weight=2]
-  # A -> C [label="0", style=dashed, weight=2]
-  # B -> C [label="0", style=dashed, weight=2]
-  # B -> D [label="2", style=dashed, weight=2]
-  # C -> D [label="0", weight=2]
-  # D -> E [label="1", style=dashed, weight=2]
-  # D -> F [label="0", weight=2]
-  # E -> F [label="0", weight=2]
-  # F -> A
-
-  # edge[style=invis];
-  # A -> D
-  # B -> E
-  # C -> F
   end
-
-end
-
-pana = Hanayo.new do
-  Define "go_to_eplus",  as: "Open eplus.jp"
-  Define "chuusen",      as: "Click on chuusen day"
-  Define "win_chuusen?", as: "Did you win?"
-  Define "book_ticket",  as: "Book ticket and reserve offkai seat"
-  Define "dekimasen",    as: "Hug neso and cry"
-
-  Start with: go_to_eplus
-
-  go_to_eplus then: chuusen
-
-  chuusen then: win_chuusen?
-
-  If win_chuusen? yes: book_ticket
-  If win_chuusen? no: dekimasen
 end
 
 
