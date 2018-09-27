@@ -177,12 +177,21 @@ def convert_blocks!(separated, name)
     elsif block[:type] == "flowchart"
 
       File.write(".tmp.rb", block[:block].join("\n"))
-      pana = Hanayo.new(file: ".tmp.rb").generate_dot
-      File.write("a.dot", pana)
-      `mkdir -p images/#{name}`
-      `dot a.dot -Tpng -oimages/#{image_name}.png`
-      block[:block] = ["![graphviz_dot](#{image_name}.png)"]
 
+      begin
+        pana = Hanayo.new(file: ".tmp.rb").generate_dot
+        File.write("a.dot", pana)
+        `mkdir -p images/#{name}`
+        `dot a.dot -Tpng -oimages/#{image_name}.png`
+        block[:block] = ["![graphviz_dot](#{image_name}.png)"]
+
+      rescue Exception => e
+        elem = Weaver::Elements.new(@page, @anchors)
+        elem.instance_eval do
+          text ["`#{e.message.gsub('`',"'")}`", "", e.backtrace.map{|x| "- `#{x.gsub('`',"'")}`"}.join("\n")].join("\n")
+        end
+        block[:block] = [elem.generate]
+      end
     end
 
   end
