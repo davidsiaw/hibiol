@@ -57,7 +57,7 @@ GEM
     trollop (2.9.9)
     tzinfo (1.2.5)
       thread_safe (~> 0.1)
-    weaver (0.6.8)
+    weaver (0.7.0)
       activesupport
       optimist
       sinatra (~> 2.0.3)
@@ -70,7 +70,7 @@ DEPENDENCIES
   foreman
   redcarpet
   sumomo (= 0.8.3)
-  weaver
+  weaver (= 0.7.0)
 
 BUNDLED WITH
    1.16.4

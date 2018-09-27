@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'weaver'
+gem 'weaver', '0.7.0'
 gem 'redcarpet'
 gem 'activesupport'
 gem 'foreman'

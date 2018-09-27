@@ -17,6 +17,240 @@ def gen(ss, anchors, &block)
   x.generate
 end
 
+def separate_blocks(content)
+  marked_blocks = []
+  document_lines = []
+
+  lines = content.split("\n")
+
+  start_mark_regex = /^```(?<type>[a-z][a-z0-9_]+)/
+
+  current_block_line_idx = 0
+  current_block_lines = []
+  current_block_type = ""
+  marking = false
+  lines.each_with_index do |line, idx|
+
+    if marking
+      if line.start_with?("```")
+        marking = false
+        marked_blocks << {
+          line: current_block_line_idx,
+          block: current_block_lines,
+          type: current_block_type
+        }
+      else
+        current_block_lines << line
+      end
+
+    else
+      m = start_mark_regex.match line
+      if m
+        marking = true
+        current_block_lines = []
+        current_block_type = m[:type]
+        current_block_line_idx = document_lines.length
+        document_lines << ""
+      else
+        document_lines << line
+      end
+    end
+
+  end
+
+  {
+    blocks: marked_blocks,
+    lines: document_lines
+  }
+end
+
+
+class Hanayo
+
+  def initialize(options={}, &block)
+    @start = nil
+    @objects = {}
+    @connections = {}
+    @decisions = {}
+
+    if block
+      instance_eval(&block)
+    end
+
+    if options[:file]
+      instance_eval(File.read(options[:file]), options[:file])
+    end
+  end
+
+  def Start(with:)
+    @start = with
+  end
+
+  def Define(a, as:)
+    self.class.dd(a)
+    @objects[:"#{a}"] = { desc: as, code: "A#{@objects.length}" }
+  end
+
+  def If(thing)
+    @decisions[thing[:objname]] = [] if !@decisions.has_key?(thing[:objname])
+
+    dec = thing[:passed_options].to_a.first
+
+    @decisions[thing[:objname]] << {
+      label: dec[0],
+      destination: dec[1]
+    }
+  end
+
+  class << self
+    def dd(a)
+      define_method(:"#{a}") do |options={}|
+        if options[:then]
+          @connections[:"#{a}"] = options[:then][:objname]
+        end
+        {
+          objname: :"#{a}",
+          passed_options: options
+        }
+      end
+    end
+  end
+
+  def generate_dot
+
+    defs = []
+    conns = []
+
+    @objects.each_with_index do |elem,idx|
+      k,v = elem
+      shape = "box"
+      if "#{k}".end_with?("?")
+        shape = "diamond, regular=true"
+      end
+      defs << "#{v[:code]}[shape=#{shape}, label=\"#{v[:desc]}\"];"
+    end
+
+    @connections.each_with_index do |elem,idx|
+      k,v = elem
+      conns << "#{@objects[:"#{k}"][:code]} -> #{@objects[:"#{v}"][:code]};"
+    end
+
+    @decisions.each_with_index do |elem, idx|
+      k,v = elem
+      v.each do |other|
+        #p other
+        conns << "#{@objects[:"#{k}"][:code]} -> #{@objects[other[:destination][:objname]][:code]} [label=#{other[:label].to_s.inspect}];"
+      end
+    end
+
+    <<-DOT   
+digraph finite_state_machine {
+  splines=false;
+  #{defs.join("\n  ")}
+  #{conns.join("\n  ")}
+}
+    DOT
+
+
+  # A [group=g1]
+  # {rank = same; B[group=g2]; C[group=g3]}
+  # D [group=g1]
+  # {rank = same; E[group=g2]; F[group=g3]}
+
+  # A -> B [label="2", weight=2]
+  # A -> C [label="0", style=dashed, weight=2]
+  # B -> C [label="0", style=dashed, weight=2]
+  # B -> D [label="2", style=dashed, weight=2]
+  # C -> D [label="0", weight=2]
+  # D -> E [label="1", style=dashed, weight=2]
+  # D -> F [label="0", weight=2]
+  # E -> F [label="0", weight=2]
+  # F -> A
+
+  # edge[style=invis];
+  # A -> D
+  # B -> E
+  # C -> F
+  end
+
+end
+
+pana = Hanayo.new do
+  Define "go_to_eplus",  as: "Open eplus.jp"
+  Define "chuusen",      as: "Click on chuusen day"
+  Define "win_chuusen?", as: "Did you win?"
+  Define "book_ticket",  as: "Book ticket and reserve offkai seat"
+  Define "dekimasen",    as: "Hug neso and cry"
+
+  Start with: go_to_eplus
+
+  go_to_eplus then: chuusen
+
+  chuusen then: win_chuusen?
+
+  If win_chuusen? yes: book_ticket
+  If win_chuusen? no: dekimasen
+end
+
+
+def convert_blocks!(separated, name)
+
+  separated[:blocks].each_with_index do |block,idx|
+
+    image_name = "#{name}/#{idx}"
+
+    if block[:type] == "math"
+      elem = Weaver::Elements.new(@page, @anchors)
+      elem.instance_eval do
+        math block[:block].join("\n")
+      end
+      block[:block] = [elem.generate]
+
+    elsif block[:type] == "graphviz_dot"
+
+      File.write("a.dot", block[:block].join("\n"))
+      `mkdir -p images/#{name}`
+      `dot a.dot -Tpng -oimages/#{image_name}.png`
+      block[:block] = ["![graphviz_dot](#{image_name}.png)"]
+
+    elsif block[:type] == "flowchart"
+
+      File.write(".tmp.rb", block[:block].join("\n"))
+      pana = Hanayo.new(file: ".tmp.rb").generate_dot
+      File.write("a.dot", pana)
+      `mkdir -p images/#{name}`
+      `dot a.dot -Tpng -oimages/#{image_name}.png`
+      block[:block] = ["![graphviz_dot](#{image_name}.png)"]
+
+    end
+
+  end
+end
+
+def recombine_blocks(separated)
+
+  marked_blocks = separated[:blocks]
+  document_lines = separated[:lines]
+
+  block_hash = {}
+  marked_blocks.each do |block|
+    block_hash[block[:line]] = block
+  end
+
+  result_lines = []
+  document_lines.each_with_index do |line, idx|
+    if block_hash.has_key?(idx)
+      block_hash[idx][:block].each do |bline|
+        result_lines << bline
+      end
+    else
+      result_lines << document_lines[idx]
+    end
+  end
+
+  result_lines.join("\n")
+end
+
 def make_page(pathname, filename)
 
   empty_page "#{pathname}", "Hibiol Wiki" do
@@ -39,7 +273,7 @@ def make_page(pathname, filename)
 
           name = filename.sub(/\.md$/, "").sub(/^#{prefix}\//, "")
 
-          name = "Preview the page" if filename == ".tmp_preview.md"
+          name = "_preview_page" if filename == ".tmp_preview.md"
 
           title { 
             h2 {
@@ -54,7 +288,11 @@ def make_page(pathname, filename)
             }
           }
 
-          rendered = markdown.render(content)
+          separated_blocks = separate_blocks(content)
+
+          convert_blocks!(separated_blocks, name)
+
+          rendered = markdown.render( recombine_blocks(separated_blocks) )
 
           rendered.gsub!(/<img src="(.+?)"/, '<img class="img-responsive" src="/images/\\1"')
 
