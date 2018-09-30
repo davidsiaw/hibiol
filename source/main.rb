@@ -125,10 +125,12 @@ class Hanayo
       k,v = elem
       shape = "box"
       if "#{k}".end_with?("?")
-        shape = "diamond, regular=true"
+        shape = "diamond"
       end
-      defs << "#{v[:code]}[shape=#{shape}, label=\"#{v[:desc]}\"];"
+      defs << "#{v[:code]}[shape=#{shape}, label=\"\\n#{v[:desc]}\\n \"];"
     end
+
+    conns << "Start -> #{@objects[:"#{@start[:objname]}"][:code]};" if @start
 
     @connections.each_with_index do |elem,idx|
       k,v = elem
@@ -145,7 +147,6 @@ class Hanayo
 
     <<-DOT   
 digraph finite_state_machine {
-  splines=false;
   #{defs.join("\n  ")}
   #{conns.join("\n  ")}
 }
@@ -221,78 +222,134 @@ def recombine_blocks(separated)
   result_lines.join("\n")
 end
 
-def make_page(pathname, filename)
+def render_file(filename, header_func: :title, show_title: true, preview: false)
+  render(File.read("#{filename}"), filename, header_func: header_func, show_title: show_title, preview: preview)
+end
 
-  empty_page "#{pathname}", "Hibiol Wiki" do
-    header do
-      col 12 do
-        h1 "Hibiol Wiki"
+def render(content, filename, header_func: :title, show_title: true, preview: false)
+  preview = true unless ENV["PREVIEW"] == "true"
+  renderer = Redcarpet::Render::HTML.new(escape_html: true)
+  markdown = Redcarpet::Markdown.new(renderer, autolink: true, tables: true)
 
+  name = filename.sub(/\.md$/, "").sub(/^#{prefix}\//, "")
+
+  name = "_preview_page" if filename == ".tmp_preview.md"
+
+  self.send(header_func) do
+    h2 do
+      text "#{name.camelize}" if show_title
+      span :class => "pull-right", style: "font-size: 0.7em; font-weight: normal" do
+
+        a href: "/edit/page?slug=#{name}&name=#{name.camelize}", target: "_top", style: "color: blue;" do
+          icon :edit
+          #text "(edit #{name})" if !show_title
+        end
+      end if !preview
+    end
+  end
+
+  separated_blocks = separate_blocks(content)
+
+  convert_blocks!(separated_blocks, name)
+
+  rendered = markdown.render( recombine_blocks(separated_blocks) )
+
+  rendered.gsub!(/<img src="(.+?)"/, '<img class="img-responsive" src="/images/\\1"')
+
+  regex = /\[\[(?<page_name>[A-Z][a-zA-Z0-9]+)\]\]/
+  rendered.gsub!(regex) do |word|
+    w = regex.match(word)
+
+    link_slug = w[:page_name].underscore
+    link_file = "#{prefix}/#{link_slug}.md"
+    link_title = "#{link_slug.camelize}"
+
+    if File.exist?(link_file)
+      gen(self, @anchors) do
+        a link_title, href: "/#{link_slug}", target: "_top", style: "color: blue;"
       end
+
+    else
+      gen(self, @anchors) do
+        a link_title, href: "/edit/page?slug=#{link_slug}&name=#{link_title}", target: "_top", style: "color: red;"
+      end
+
+    end
+
+  end
+
+  rendered
+end
+
+def render_subsection(name, preview: false)
+  filename = "data/pages/_#{name}.md"
+  if File.exist?(filename)
+    render_file(filename, header_func: :h1, show_title: false, preview: preview)
+  else
+    render("", filename, header_func: :h1, show_title: false, preview: preview)
+  end
+end
+
+def make_standard_page(pathname, &block)
+
+  topnav_page "#{pathname}", "Hibiol Wiki" do
+
+    menu do
+      nav "Home", :home, "/"
+      nav "All pages", :list, "/meta/all_pages"
     end
 
     row do
       col 12 do
-
-        content = File.read("#{filename}")
-
-        renderer = Redcarpet::Render::HTML.new(escape_html: true)
-        markdown = Redcarpet::Markdown.new(renderer, autolink: true, tables: true)
-
-        ibox do
-
-          name = filename.sub(/\.md$/, "").sub(/^#{prefix}\//, "")
-
-          name = "_preview_page" if filename == ".tmp_preview.md"
-
-          title { 
-            h2 {
-
-              text "#{name.camelize}"
-              span :class => "pull-right", style: "font-size: 0.7em; font-weight: normal" do
-
-                a href: "/edit/page?slug=#{name}&name=#{name.camelize}", target: "_top", style: "color: blue;" do
-                  icon :edit
-                end if filename != ".tmp_preview.md"
-              end
-            }
-          }
-
-          separated_blocks = separate_blocks(content)
-
-          convert_blocks!(separated_blocks, name)
-
-          rendered = markdown.render( recombine_blocks(separated_blocks) )
-
-          rendered.gsub!(/<img src="(.+?)"/, '<img class="img-responsive" src="/images/\\1"')
-
-          regex = /\[\[(?<page_name>[A-Z][a-zA-Z0-9]+)\]\]/
-          rendered.gsub!(regex) do |word|
-            w = regex.match(word)
-
-            link_slug = w[:page_name].underscore
-            link_file = "#{prefix}/#{link_slug}.md"
-            link_title = "#{link_slug.camelize}"
-
-            if File.exist?(link_file)
-              gen(self, @anchors) do
-                a link_title, href: "/#{link_slug}", target: "_top", style: "color: blue;"
-              end
-
-            else
-              gen(self, @anchors) do
-                a link_title, href: "/edit/page?slug=#{link_slug}&name=#{link_title}", target: "_top", style: "color: red;"
-              end
-
-            end
-
-          end
-
-          text rendered
-        end
-
+        text render_subsection(:header, preview: preview)
       end
     end
+
+    instance_eval(&block)
+
+    row do
+      col 12 do
+        text render_subsection(:footer, preview: preview)
+      end
+    end
+  end
+
+end
+
+def make_page(pathname, filename)
+
+  name = filename.sub(/\.md$/, "").sub(/^#{prefix}\//, "")
+  preview = filename == ".tmp_preview.md"
+
+  make_standard_page(pathname) do
+
+    row do
+      content_width = 12      
+      sidebar_exists = File.exist?("data/pages/_sidebar.md")
+      page_sidebar_exists = File.exist?("data/pages/_sidebar_#{name}.md")
+      if sidebar_exists || page_sidebar_exists
+        content_width = 9
+      end
+      sidebar_width = 12-content_width
+
+      col content_width, sm: 12, xs: 12 do
+        ibox do
+          text render_file(filename, preview: preview)
+        end
+        if !preview
+          text render_subsection(:sidebar, preview: preview) if !sidebar_exists
+          br if !sidebar_exists && !page_sidebar_exists
+          text render_subsection(:"sidebar_#{name}", preview: preview) if !page_sidebar_exists
+        end
+      end
+
+      col sidebar_width, sm: 12, xs: 12 do
+        text render_subsection(:sidebar, preview: preview) if sidebar_exists
+        br if sidebar_exists && page_sidebar_exists
+        text render_subsection(:"sidebar_#{name}", preview: preview) if page_sidebar_exists
+      end
+    end
+
   end
 
 end

@@ -1,0 +1,22 @@
+include "main.rb"
+
+make_standard_page("all_pages") do
+
+  row do
+    col 12 do
+
+      ibox do
+        title { h2 "All Pages" }
+        ul do
+          Dir["data/pages/*.md"].sort.each do |filename|
+            name = filename.sub(/\.md$/, "").sub(/^#{prefix}\//, "")
+            if name.start_with?("_")
+              next
+            end
+            li { hyperlink "/#{name}", "#{name.camelize}" }
+          end
+        end
+      end
+    end
+  end
+end
