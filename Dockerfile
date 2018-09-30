@@ -1,5 +1,7 @@
 FROM ruby:2.4.4-alpine3.6
 
+RUN mkdir /app
+
 ADD css /app/css
 ADD Gemfile /app/Gemfile
 ADD Gemfile.lock /app/Gemfile.lock
