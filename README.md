@@ -4,7 +4,7 @@ Hibiol is a static wiki generator made with Weaver and Sumomo's API feature.
 
 # Getting started using docker
 
-This is a lot cleaner because all you have is a current directory with your pages.
+This is a lot easier because all you have is a current directory with your pages.
 
 ## Requires
 
@@ -14,7 +14,7 @@ This is a lot cleaner because all you have is a current directory with your page
 
 ```
 mkdir -p data/pages
-docker run -v `pwd`/data:/app/data -p 4567:4567 -p 5000:5000 -ti davidsiaw/hibiol
+docker run -v `pwd`/data:/app/data -v `pwd`/images:/app/images -p 4567:4567 -p 5000:5000 -ti davidsiaw/hibiol
 ```
 
 ## Where to use
