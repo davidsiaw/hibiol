@@ -12,7 +12,7 @@ ADD Procfile /app/Procfile
 
 WORKDIR app
 
-RUN apk update && apk add nodejs make gcc build-base graphviz && bundle install
+RUN apk update && apk add nodejs make gcc build-base graphviz font-bitstream-type1 ghostscript-fonts && bundle install
 
 ADD start.sh /app/start.sh
 

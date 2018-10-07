@@ -13,7 +13,8 @@ This is a lot easier because all you have is a current directory with your pages
 ## How to run
 
 ```
-mkdir -p data/pages
+mkdir -p data/pages images
+touch data/pages/home.md
 docker run -v `pwd`/data:/app/data -v `pwd`/images:/app/images -p 4567:4567 -p 5000:5000 -ti davidsiaw/hibiol
 ```
 
@@ -24,7 +25,7 @@ https://localhost:4567
 ## How to deploy
 
 ```
-docker run -v `pwd`/build:/app/release -v `pwd`/data:/app/data -ti davidsiaw/hibiol build
+docker run -v `pwd`/build:/app/release -v `pwd`/data:/app/data -v `pwd`/images:/app/images -ti davidsiaw/hibiol build
 ```
 
 ---
