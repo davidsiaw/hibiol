@@ -2,6 +2,7 @@
 api = make_api "localhost", name: "Meow" do
 
   SCRIPT <<-SCRIPT
+    var fs = require('fs');
     String.prototype.replaceAll = function(search, replacement) {
         var target = this;
         return target.replace(new RegExp(search, 'g'), replacement);
@@ -26,7 +27,6 @@ api = make_api "localhost", name: "Meow" do
   SCRIPT
 
   POST "/write", <<-SCRIPT
-    var fs = require('fs');
     fs.writeFile("data/pages/" + params["slug"] + ".md", decodeURIComponent(params["content"]), function(err) {
         if(err)
         {
@@ -43,8 +43,6 @@ api = make_api "localhost", name: "Meow" do
   SCRIPT
 
   POST "/write_preview", <<-SCRIPT
-    var fs = require('fs');
-
     fs.writeFile(".tmp_preview.md", decodeURIComponent(params["content"]), function(err) {
         if(err)
         {

@@ -226,6 +226,24 @@ def render_file(filename, header_func: :title, show_title: true, preview: false)
   render(File.read("#{filename}"), filename, header_func: header_func, show_title: show_title, preview: preview)
 end
 
+def split_meta(content)
+  result = {
+    meta: {},
+    content: content
+  }
+
+  if content.start_with?("---")
+    sections = content.split("---\n", 3)
+    begin
+      result[:meta] = YAML.load(sections[1])
+      result[:content] = sections[2]
+    rescue
+    end
+  end
+
+  result
+end
+
 def render(content, filename, header_func: :title, show_title: true, preview: false)
   preview = true unless ENV["PREVIEW"] == "true"
   renderer = Redcarpet::Render::HTML.new(escape_html: true)
@@ -248,6 +266,44 @@ def render(content, filename, header_func: :title, show_title: true, preview: fa
     end
   end
 
+  s = split_meta(content)
+  content = s[:content]
+  metadata = s[:meta]
+
+  footer do
+    references = metadata["references"]
+    tags = metadata["tags"]
+
+    if references
+
+      h6 do
+        h5 "References"
+        ul do
+          references.each do |num, val|
+            li id: "reference_#{num}_background" do
+              a "[#{num}]", id:"#reference_#{num}"
+              text " - "
+              text "#{val}".sub(/\(https?\:.+?\)/){ |x| gen(self, @anchors) { hyperlink x.gsub(/^\(|\)$/, ""), x }}
+            end
+          end
+        end
+      end
+
+    end
+
+    if tags
+
+      h5 do
+        text "Tags: "
+        tags.each do |tag|
+          a "#{tag} ", href:"/tags/#{tag}"
+        end
+      end
+
+    end
+  end if metadata.keys.length != 0
+
+  # process blocks
   separated_blocks = separate_blocks(content)
 
   convert_blocks!(separated_blocks, name)
@@ -256,9 +312,9 @@ def render(content, filename, header_func: :title, show_title: true, preview: fa
 
   rendered.gsub!(/<img src="(.+?)"/, '<img class="img-responsive" src="/images/\\1"')
 
-  regex = /\[\[(?<page_name>[A-Z][a-zA-Z0-9]+)\]\]/
-  rendered.gsub!(regex) do |word|
-    w = regex.match(word)
+  wikilink_match = /\[\[(?<page_name>[A-Z][a-zA-Z0-9]+)\]\]/
+  rendered.gsub!(wikilink_match) do |word|
+    w = wikilink_match.match(word)
 
     link_slug = w[:page_name].underscore
     link_file = "#{prefix}/#{link_slug}.md"
@@ -275,8 +331,28 @@ def render(content, filename, header_func: :title, show_title: true, preview: fa
       end
 
     end
-
   end
+
+  citation_match = /\{\{(?<refnum>[0-9]+)\}\}/
+  rendered.gsub!(citation_match) do |word|
+    w = citation_match.match(word)
+
+    num = w[:refnum]
+    gen(self, @anchors) do
+      sup do
+        a "[#{num}]", href: "#reference_#{num}", target: "_top"
+      end
+    end
+  end
+
+  icon_match = /:(?<icon>[a-zA-Z0-9-_]+):/
+  rendered.gsub!(icon_match) do |word|
+    iconsym = icon_match.match(word)[:icon]
+
+    gen(self, @anchors) { icon :"#{iconsym}" }
+  end
+
+  rendered.gsub!("<table>", '<table class="table table-bordered table-striped table-hover">')
 
   rendered
 end

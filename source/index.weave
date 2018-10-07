@@ -2,7 +2,39 @@ include "main.rb"
 
 make_page("", "#{prefix}/home.md")
 
+tags = {}
+
 Dir["#{prefix}/*.md"].each do |filename|
   name = filename.sub(/\.md$/, "").sub(/^#{prefix}\//, "")
   make_page(name, filename)
+  c = File.read(filename)
+  meta = split_meta(c)[:meta]
+  page_tags = meta["tags"]
+  if page_tags
+    page_tags.each do |tag|
+      tags[tag] = [] if !tags.has_key?(tag)
+      tags[tag] << name
+    end
+  end
 end
+
+tags.each do |tag, pages|
+  make_standard_page("tags/#{tag}") do
+
+    row do
+      col 12 do
+        ibox do
+          title {
+            h2 "Tag: #{tag}"
+          }
+          ul do
+            pages.each do |page|
+              li { a page.camelize, href: "/#{page}" }
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
