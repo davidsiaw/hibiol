@@ -368,7 +368,7 @@ end
 
 def make_standard_page(pathname, &block)
 
-  topnav_page "#{pathname}", "Hibiol Wiki" do
+  topnav_page "#{pathname}", (ENV['WIKI_TITLE'] || "Hibiol Wiki") do
 
     menu do
       nav "Home", :home, "/"
