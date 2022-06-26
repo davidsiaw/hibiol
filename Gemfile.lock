@@ -34,7 +34,7 @@ GEM
     rack-protection (2.0.4)
       rack
     redcarpet (3.5.1)
-    rubyzip (1.2.2)
+    rubyzip (2.3.2)
     s3cabinet (0.1.0)
       aws-sdk-core
       json
