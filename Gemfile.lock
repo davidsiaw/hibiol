@@ -55,7 +55,7 @@ GEM
     thread_safe (0.3.6)
     tilt (2.0.8)
     trollop (2.9.9)
-    tzinfo (1.2.7)
+    tzinfo (1.2.10)
       thread_safe (~> 0.1)
     weaver (0.7.0)
       activesupport
