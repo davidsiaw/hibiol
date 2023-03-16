@@ -30,7 +30,7 @@ GEM
       trollop
     mustermann (1.0.3)
     optimist (3.0.0)
-    rack (2.0.5)
+    rack (2.2.6.4)
     rack-protection (2.0.4)
       rack
     redcarpet (3.5.1)
